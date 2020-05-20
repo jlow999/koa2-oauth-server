@@ -62,18 +62,21 @@ OauthModel.prototype.generateAuthorizationCode = undefined;
  *         {Object} token.user - the user which this access token represents, this data structure of the user object is not part of the Model Specification, and what it should be is completely up to you. In this example, we use { username: 'someUserName' } where the 'username' field is used to uniquely identify an user in the user database.
  */
 OauthModel.prototype.getAccessToken = async function(accessToken){
-	var self = this,
-		token = self.accessTokenStore.get(accessToken),
-		client, user;
+	const token = this.accessTokenStore.get(accessToken);
 
 	if(!token){
 		return null;
 	}
 
-	token.client = { id: token.client };
-	token.user = { username: token.user };
-
-	return token;
+	return {
+		...token,
+		client:  {
+			id: token.client
+		},
+		user: {
+			username: token.user
+		},
+	};
 };
 
 /**

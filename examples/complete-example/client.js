@@ -79,7 +79,7 @@ router.get('/getUserInfo', async (ctx, next) => {
                 throw new Error(`error-code:${resp.response.statusCode}`);
             }
         }catch(e){
-
+            console.log('>>> getWithToken exception', JSON.stringify(e));
             return ctx.body = { error: e };
         }
     }

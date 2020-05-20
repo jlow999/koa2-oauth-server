@@ -39,18 +39,17 @@ function ApiRouter(app, options={}){
      * OAuth Protected API: use to get the user info, in scope 'user_info:read'
      */
     apiRouter.get('/user/detail', async (ctx, next) => {
-        var user = ctx.state.user,
-            detail = userDb.get(user.username);
+        const { user } = ctx.state;
+        try {
+            const detail = userDb.get(user.username);
+            const { password, ...rest } = detail;
 
-        console.log('>>> detail', detail)
-
-        delete detail.password;
-
-        //respond with the user's detail information
-        ctx.body = {
-            'success': true,
-            'result': detail
-        };
+            //respond with the user's detail information
+            ctx.body = { success: true, detail: rest };
+        } catch (e) {
+            console.log('>>> /user/detail endpoint exception', JSON.stringify(e));
+            ctx.body = { success: false };
+        }
     });
 
     /**
