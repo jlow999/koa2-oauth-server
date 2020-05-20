@@ -6,7 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["OAuth2", "Node", "Koa", "Koa2"],
+  "keywords": [
+    "OAuth2",
+    "Node",
+    "Koa",
+    "Koa2"
+  ],
   "author": "waychan23@hotmail.com",
   "license": "MIT",
   "dependencies": {

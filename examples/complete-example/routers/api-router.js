@@ -42,6 +42,8 @@ function ApiRouter(app, options={}){
         var user = ctx.state.user,
             detail = userDb.get(user.username);
 
+        console.log('>>> detail', detail)
+
         delete detail.password;
 
         //respond with the user's detail information

@@ -15,13 +15,15 @@ const router = new Router();
 
 const OAUTH_STATE_EXPIRES_IN = 1000 * 60 * 5;// 5 minutes
 
+const OAUTH_SERVER_PORT = 3002;
+
 const oauthServerInfo = {
     endpoint: {
-        'authorize': 'http://localhost:3002/oauth/authorize',
-        'token': 'http://localhost:3002/oauth/token'
+        'authorize': `http://localhost:${OAUTH_SERVER_PORT}/oauth/authorize`,
+        'token': `http://localhost:${OAUTH_SERVER_PORT}/oauth/token`,
     },
     api: {
-        'getUserInfo': 'http://localhost:3002/api/user/detail'
+        'getUserInfo': `http://localhost:${OAUTH_SERVER_PORT}/api/user/detail`
     }
 };
 
@@ -56,11 +58,13 @@ router.get('/revoke', async (ctx, next) => {
 });
 
 router.get('/getUserInfo', async (ctx, next) => {
+    console.log('/getUserInfo', ctx.session);
     var token = ctx.session.token,
         refresh = false,
         resp;
 
     if(token && !isExpired(token.expiresAt)){
+        console.log('>>> token && !isExpired');
         try{
             resp = await httpUtils.getWithToken(oauthServerInfo.api.getUserInfo, {
                 token: token.accessToken,
@@ -80,11 +84,18 @@ router.get('/getUserInfo', async (ctx, next) => {
         }
     }
 
+    if(token && isExpired(token.expiresAt)){
+        console.log('>>> token && isExpired');
+        return redirectToAuthorize(ctx);
+    }
+
     if(!token){
+        console.log('>>> !token');
         return redirectToAuthorize(ctx);
     }
 
     if(!refresh){
+        console.log('>>> !refresh');
         return ctx.body = { error: 'unknown error' };
     }
 

@@ -78,6 +78,7 @@ function authenticateHandler(){
 }
 
 async function forwardToLogin(ctx, callbackUri){
+	console.log('>>> forwardToLogin, callbackUri\n', callbackUri);
 	await forwardToView(ctx, 'login', {
 		//when logged in successfully, redirect back to the original request url
 		'callbackUri': Buffer.from(callbackUri, 'utf-8').toString('base64'),
@@ -112,7 +113,16 @@ function isExpired(time){
 	return Date.now() >= time;
 }
 
+/**
+ * check if the user has logged, if not, redirect to login page,
+ * otherwise redirect to the authorization confirm page
+ * 
+ * @param {*} ctx 
+ * @param {*} next 
+ */
 async function checkLogin(ctx, next){
+	console.log('>>> checkLogin');
+
 	var agree = ctx.query.agree == 'true',
 		deny = ctx.query.deny == 'true', 
 		logout = ctx.query.logout == 'true',
@@ -127,6 +137,8 @@ async function checkLogin(ctx, next){
 	}
 
 	client = localFileClientRegistry.clients[clientId];
+	console.log('>>> checkLogin, clinet.id\n', client.id);
+
 	//in this example, we simply filter out those scopes that are not valid
 	scopes = scope.split(',').map(s => localFileClientRegistry.scopes[s]).filter(Boolean);
 
@@ -137,22 +149,28 @@ async function checkLogin(ctx, next){
 	curRequestUrl = removeUserAction(getRequestUrl(ctx));
 
 	if(!loginUser){
+		console.log('>>> checkLogin, session.loginUser == null ...\n\n');
 		return await forwardToLogin(ctx, curRequestUrl);
 	}
+
+	console.log('>>> checkLogin, validate csrfToken...');
 
 	if(csrfToken && sessCsrfToken && 
 		sessCsrfToken.token == csrfToken && 
 		!isExpired(sessCsrfToken.expiresAt) &&
 		(agree || deny || logout)){
 		if(deny){
+			console.log('>>> checkLogin, deny');
 			await forwardToView(ctx, 'user-denied', {
 				'clientName': client.name,
 				'username': loginUser.username
 			});
 		}else if(logout){
+			console.log('>>> checkLogin, logout');
 			ctx.session.loginUser = null;
 			return await forwardToLogin(ctx, curRequestUrl);
-		}else{//agree
+		}else{ //agree
+			console.log('>>> checkLogin, agree');
 			await next();
 		}
 		return;
@@ -165,6 +183,8 @@ async function checkLogin(ctx, next){
 
 	ctx.session.userConfirmCsrfToken = sessCsrfToken;
 
+	console.log('>>> checkLogin, forward to user-confirm view...\n\n');
+
 	await forwardToView(ctx, 'user-confirm', {
 		'oauthUri': curRequestUrl,
 		'csrfToken': sessCsrfToken.token,
@@ -174,10 +194,14 @@ async function checkLogin(ctx, next){
 	});
 }
 
+/**
+ * User Login
+ * @param {*} ctx 
+ * @param {*} next 
+ */
 async function login(ctx, next){
-	var callbackUri = ctx.request.body.callback_uri,
-		{ username, password } = ctx.request.body,
-		user;
+	let callbackUri = ctx.request.body.callback_uri;
+	const	{ username, password } = ctx.request.body;
 
 	if(!callbackUri || !username || !password){
 		return ctx.status = 400;
@@ -185,7 +209,8 @@ async function login(ctx, next){
 
 	callbackUri = Buffer.from(callbackUri, 'base64').toString('utf-8');
 
-	user = userDb.get(username);	
+	const user = userDb.get(username);
+	console.log('>>> login, userDb.get', user.firstName, user.lastName);
 
 	if(!user || user.password != password){
 		await forwardToLogin(ctx, callbackUri);
@@ -196,5 +221,6 @@ async function login(ctx, next){
 
 	ctx.session.loginUser = { 'username': username };
 
+	console.log('>>> login, successfully. redirect to\n', callbackUri);
 	ctx.redirect(callbackUri);
 }

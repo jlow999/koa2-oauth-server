@@ -12,6 +12,14 @@ This is the koa2 wrapper for [oauth2-server](https://github.com/oauthjs/node-oau
 
 ## Quick Start
 
+To start the server, run the following command:
+
+    $ node server.js
+
+To start the client, run the following command:
+
+    $ node client.js
+
 The module provides two middlewares - one for granting tokens and another to authorize them. `koa2-oauth-server` and, consequently `oauth2-server`, expect the request body to be parsed already.
 The following example uses `koa-bodyparser` but you may opt for an alternative library.
 
